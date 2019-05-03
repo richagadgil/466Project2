@@ -33,19 +33,14 @@ def main():
             words = line.split('\t')
             filtered = [word.strip() for word in words]
             filtered[:] = [x for x in filtered if x != '']
-            unique_words += words[14].lower().replace("[^A-Za-z0-9]+", "").split()
+
+            unique_words += (re.sub('[^A-Za-z0-9 ]+', '', words[14]).lower().split())
 
     unique_words = list(set(unique_words))
 
     print(unique_words)
 
 
-    
-    #Document corpus: all the records
-    #number unique words in corpus
-    #for each record calculate TF and IDF
-    #
-    
 
 
 
