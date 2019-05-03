@@ -38,7 +38,7 @@ def main():
 
     unique_words = list(set(unique_words))
 
-    print(unique_words)
+    print(len(unique_words))
 
 
 
