@@ -15,7 +15,6 @@ class Record:
     text = None
 
 
-
 def main():
     args = sys.argv[1:]
 
@@ -44,9 +43,26 @@ def main():
 
 
 
-def get_features(record):
-  pass
+def get_features(text):
+  	bag_of_words = get_frequencies(text)
+  	tf_values = computeTF(bag_of_words, words)
+	print(tf_values)
 
+def get_frequencies(words):
+	words_dict = {}
+	for word in words:
+		if word in words_dict:
+			words_dict[word] += 1
+		else:
+			words_dict[word] = 1	
+	return words_dict
 
+def computeTF(bag_of_words, words):
+	tf_values = {}
+	for key in bag_of_words.keys():
+		tf = bag_of_words[key] / len(words)
+		tf_values[key] = tf
+	
+	return tf_values
 if __name__ == '__main__':
   main()
