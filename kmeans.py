@@ -1,7 +1,7 @@
 import sys
 import numpy as np
 import re
-
+from sklearn.cluster import KMeans
 
 
 
@@ -71,16 +71,18 @@ def main():
             #filtered = [word.strip() for word in words]
             #filtered[:] = [x for x in filtered if x != '']
             text = re.sub('[^A-Za-z0-9 ]+', '', words[14]).lower().split()
-            vector = get_features(text, num_records,word_occurrences)
-            vectors.append(np.array(vector)) 
-            records[counter-1].add_vector(np.array(vector))
+            vector = np.multiply(np.array(get_features(text, num_records,word_occurrences)), 100)
+            vectors.append(vector) 
+            records[counter-1].add_vector(vector)
             counter += 1
             if(counter == 3000):
                 break
     #print(data['data'])
     k = len(found_cids)
-    my_kmeans(records, k, 0.001)
-    
+    print("My Kmeans labels:")
+    my_kmeans2(np.array(vectors), k, 0.01)
+    print("Sklearn kmeans labels:")
+    get_scikit_kmeans_centroids(k,np.array(vectors),0.01)
             
 def get_features(words,numRecords, wordOccurrences):
     bag_words = get_frequencies(words)
@@ -139,14 +141,17 @@ def my_kmeans(Records, k, e=0.001):
     for i in range(k):
         last_centroids.append(Records[i].vector)
         centroids.append(Records[i].vector)    
-
-    i = 0
+    i = 0 
     while True:
+        labels = [0] * len(Records)
         clusters = [[] for __ in range(k)]
         # Cluster assignment step
-        for feature_x_j in Records:
+        counter = 0
+        for feature_x_j in Records:    
             cci = _closest_cluster_index(feature_x_j, centroids)
             clusters[cci].append(feature_x_j)
+            labels[counter] = cci
+            counter+=1
 
 
         # Centroid update step
@@ -159,25 +164,77 @@ def my_kmeans(Records, k, e=0.001):
         # Check if within error
         for centroid, last_centroid in zip(centroids, last_centroids):
             if len(last_centroids) > 0 and np.sum((centroid- last_centroid)**2) <= e:
-                labels = [[] for __ in range(k)]
-                for i in range(0, len(clusters)):
-                    for j in range(len(clusters[i])):
-                        labels[i].append(clusters[i][j].cid)
-                print(labels[5])
+                print(labels)
                 return clusters  # Optimal clustering achieved.
 
         # Save current to t-1
         last_centroids = np.copy(centroids)
 
-def get_scikit_kmeans_centroids(num_clusters, points, tolerance):
-    return KMeans(
+def get_scikit_kmeans_centroids(num_clusters, vectors, tolerance):
+    print(list(KMeans(
             n_clusters=num_clusters,
             n_init=1,
-            init=points['data'][:num_clusters],
+            init=vectors[:num_clusters],
             random_state=0,
             tol=tolerance
-    ).fit(points['data']).cluster_centers_ #we overwrite the foggy method
+    ).fit(vectors).labels_)[:30]) #we overwrite the foggy method
 
+
+def _closest_cluster_index(feature_x_j, centroids):
+    closest_dist = np.inf
+    closest_cluster_index = 0
+
+    for index, centroid_i in enumerate(centroids):
+        euclidean_distance = np.linalg.norm(feature_x_j - centroid_i)
+
+        if euclidean_distance < closest_dist:
+            closest_dist = euclidean_distance
+            closest_cluster_index = index
+
+    return closest_cluster_index
+
+
+def my_kmeans2(Data, k, e=0.001):
+    """
+    :param Data: Raw return from _generate_points()
+    :param k: Number of clusters to create
+    :param e: Maximum error threshold
+    :return: Final centroids and a NumPy array of features.
+    """
+
+    # we start with the first k points given as the initial centroids
+    last_centroids = []
+    centroids = np.copy(Data[:k])
+
+
+
+    i = 0
+    while True:
+        clusters = [[] for __ in range(k)]
+
+        labels = [0] * len(Data)
+        # Cluster assignment step
+        counter = 0
+        for feature_x_j in Data:
+            cci = _closest_cluster_index(feature_x_j, centroids)
+            clusters[cci].append(feature_x_j)
+            labels[counter] = cci 
+            counter += 1
+
+        # Centroid update step
+        for index, cluster in enumerate(clusters):
+            centroids[index] = np.average(clusters[index], axis = 0)
+
+        # Check if within error
+        for centroid, last_centroid in zip(centroids, last_centroids):
+            if len(last_centroids) > 0 and np.sum((centroid - last_centroid)**2) <= e:
+                print(labels[:30])
+                return centroids  # Optimal clustering achieved.
+
+        # Save current to t-1
+        # Current (t) will be overwritten in next loop (unless loop not entered)
+        last_centroids = np.copy(centroids)
+    
 
 if __name__ == '__main__':
     main()
