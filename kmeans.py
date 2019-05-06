@@ -1,9 +1,8 @@
 import sys
-import numpy
-import re
-import random
 import numpy as np
-from sklearn.cluster import KMeans
+import re
+
+
 
 
 class Record:
@@ -17,66 +16,56 @@ class Record:
     text = None
 
 
-    def __init__(self):
-        pass
-    
-    def add_cid(self, cid):
-        self.cid = cid
-    
-    def add_text(self, text):
-        self.text = text
-
-
 def main():
     args = sys.argv[1:]
-
     if not args or len(args) != 1:
         print("usage: main filename")
         sys.exit(1)
-    
     filename = args[0]
     unique_words = []
-    records = [] #total records
-
-
+    word_occurrences = {}
     with open(filename, 'r') as f:
-        D = []
-        counter = 0
+        num_records = 0
         for line in f:
+            if num_records == 0:
+                num_records += 1
+                continue
+            words = line.split('\t')
+            filtered = [word.strip() for word in words]
+            filtered[:] = [x for x in filtered if x != '']
+            text = re.sub('[^A-Za-z0-9 ]+', '', words[14]).lower().split()
+            unique_by_record = set(text)
+            for word in unique_by_record:
+                if word in word_occurrences:
+                    word_occurrences[word] += 1
+                else:
+                    word_occurrences[word] = 1 
+            num_records += 1
+    with open(filename, 'r') as f:
+        counter = 1
+        for line in f:
+            if counter == 1:
+                counter += 1
+                continue
             if counter == 3:
                 break
-            words = line.split('\t') #split words along tabs
-            print(words)
-            filtered = [word.strip() for word in words] #strip whitespace 
+            words = line.split('\t')
+            filtered = [word.strip() for word in words]
             filtered[:] = [x for x in filtered if x != '']
-            text = re.sub('[^A-Za-z0-9 ]+', '', words[14]).lower().split() #remove punctuation/special chars from words
-            get_features(text) 
-            unique_words += (text)
+            text = re.sub('[^A-Za-z0-9 ]+', '', words[14]).lower().split()
+            print(get_features(text, num_records,word_occurrences))
             counter += 1
 
-            if(counter > 1): #add all records to record list EXCEPT FOR HEADER
-                record = Record() #create new Record
-                record.add_cid(int(words[2])) #add CID & Text
-                record.add_text(words[14])
-
-                records.append(record) # append to record list 
-
-            
-
-
-            
-    print(len(records))
-    
-   
-    unique_words = list(set(unique_words))
-
-    print(len(unique_words))
-
-
-def get_features(words):
-    bag_of_words = get_frequencies(words)
-    tf_values = computeTF(bag_of_words, words)
-    print(tf_values)
+def get_features(words,numRecords, wordOccurrences):
+	bag_words = get_frequencies(words)
+	tf_idf_vals = computeTF_IDF(bag_words, words, numRecords, wordOccurrences)
+	vector_dict = {}
+    for key in wordOccurrences.keys():
+        if key in tf_idf_vals.keys():
+            vector_dict[key] = tf_idf_vals[key] 
+        else:
+            vector_dict[key] = 0
+    return vector_dict.values()
 
 def get_frequencies(words):
     words_dict = {}
@@ -87,14 +76,12 @@ def get_frequencies(words):
             words_dict[word] = 1	
     return words_dict
 
-def computeTF(bag_of_words, words):
-    tf_values = {}
+def computeTF_IDF(bag_of_words, words, num_lines, occurrences_overall):
+    tf_idf_values = {}
     for key in bag_of_words.keys():
         tf = bag_of_words[key] / len(words)
-        tf_values[key] = tf
+        tf_idf_values[key] = tf * np.log(num_lines / occurrences_overall[key])
+    return tf_idf_values
 	
-    return tf_values
-
-
 if __name__ == '__main__':
     main()
