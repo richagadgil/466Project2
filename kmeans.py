@@ -1,8 +1,9 @@
 import sys
 import numpy as np
 import re
+import nltk
 from sklearn.cluster import KMeans
-
+from nltk.corpus import stopwords 
 
 
 class Record:
@@ -33,7 +34,6 @@ def main():
         print("usage: main filename")
         sys.exit(1)
     filename = args[0]
-    word_occurrences = {}
     records = []
     vectors = []
     found_cids = set()
@@ -51,32 +51,12 @@ def main():
             records.append(r)
             #filtered = [word.strip() for word in words]
             #filtered[:] = [x for x in filtered if x != '']
-            text = re.sub('[^A-Za-z0-9 ]+', '', words[14]).lower().split()
-            unique_by_record = set(text)
-            for word in unique_by_record:
-                if word in word_occurrences:
-                    word_occurrences[word] += 1
-                else:
-                    word_occurrences[word] = 1 
+            vector = get_features(words[14])
+            vectors.append(vector)
+            records[num_records-1].add_vector(vector) 
             num_records += 1
             if(num_records == 3000):
                 break  
-    with open(filename, 'r') as f:
-        counter = 0
-        for line in f:
-            if counter == 0:
-                counter += 1
-                continue
-            words = line.split('\t')
-            #filtered = [word.strip() for word in words]
-            #filtered[:] = [x for x in filtered if x != '']
-            text = re.sub('[^A-Za-z0-9 ]+', '', words[14]).lower().split()
-            vector = np.multiply(np.array(get_features(text, num_records,word_occurrences)), 100)
-            vectors.append(vector) 
-            records[counter-1].add_vector(vector)
-            counter += 1
-            if(counter == 3000):
-                break
     #print(data['data'])
     k = len(found_cids)
     print("My Kmeans labels:")
@@ -84,34 +64,20 @@ def main():
     print("Sklearn kmeans labels:")
     get_scikit_kmeans_centroids(k,np.array(vectors),0.01)
             
-def get_features(words,numRecords, wordOccurrences):
-    bag_words = get_frequencies(words)
-    tf_idf_vals = computeTF_IDF(bag_words, words, numRecords, wordOccurrences)
-    vector_dict = {}
-    for key in wordOccurrences.keys():
-        if key in tf_idf_vals.keys():
-            vector_dict[key] = tf_idf_vals[key] 
-        else:
-            vector_dict[key] = 0
-    return list(vector_dict.values())
-
-def get_frequencies(words):
-    words_dict = {}
-    for word in words:
-        if word in words_dict:
-            words_dict[word] += 1
-        else:
-            words_dict[word] = 1	
-    return words_dict
-
-def computeTF_IDF(bag_of_words, words, num_lines, occurrences_overall):
-    tf_idf_values = {}
-    n = len(words)
-    for key in bag_of_words.keys():
-        tf = bag_of_words[key] / n
-        tf_idf_values[key] = tf * np.log(num_lines / occurrences_overall[key])
-    return tf_idf_values
-	
+def get_features(text):
+    features = {}
+    words = re.sub('[^A-Za-z0-9 ]+', '', words[14]).lower().split()
+    words = [word for word in words not in stopwords.words('english')]
+	if len(words) < 3:
+        return {}
+    elif len(words) == 3:
+        featureName = ' '.join(words)
+        features[featureName] = 1 
+    else:
+        for window in range(len(words)-2):
+            featureName = ' '.join(words[window:window+3])
+            features[featureName] = 1
+    return features    
 
 def _closest_cluster_index(feature_x_j, centroids):
     closest_dist = np.inf
