@@ -196,7 +196,10 @@ def my_kmeans2(Data, k, e=0.001):
 
         # Centroid update step
         for index, cluster in enumerate(clusters):
-            centroids[index] = np.average(clusters[index], axis = 0)
+            if(len(clusters[index]) == 0):
+                centroids[index] = 0
+            else:
+                centroids[index] = np.average(clusters[index], axis = 0)
 
         # Check if within error
         for centroid, last_centroid in zip(centroids, last_centroids):
