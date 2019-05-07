@@ -67,9 +67,9 @@ def main():
         vectors.append(np.array(list(vector.values())))
         records[i].add_vector(np.array(list(vector.values())))
     print("My Kmeans labels:")
-    my_kmeans2(np.array(vectors), 5, 0.01)
+    my_kmeans2(np.array(vectors), 3, 0.01)
     print("Sklearn kmeans labels:")
-    get_scikit_kmeans_centroids(5,np.array(vectors),0.01)
+    get_scikit_kmeans_centroids(3,np.array(vectors),0.01)
             
 def get_features(text):
     features = {}
