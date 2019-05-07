@@ -34,9 +34,10 @@ def main():
         print("usage: main filename")
         sys.exit(1)
     filename = args[0]
+    overall_features = {}
     records = []
     vectors = []
-    found_cids = set()
+    features = []
     with open(filename, 'r') as f:
         num_records = 0
         for line in f:
@@ -46,29 +47,35 @@ def main():
             words = line.split('\t')
             r = Record()
             r.add_cid(words[2])
-            found_cids.add(words[2])
             r.add_text(words[14])
             records.append(r)
             #filtered = [word.strip() for word in words]
             #filtered[:] = [x for x in filtered if x != '']
-            vector = get_features(words[14])
-            vectors.append(vector)
-            records[num_records-1].add_vector(vector) 
+            feature = get_features(words[14])
+            for name in feature:
+                if name not in overall_features:
+                    overall_features[name] = 0 
+            features.append(feature)
             num_records += 1
             if(num_records == 3000):
                 break  
     #print(data['data'])
-    k = len(found_cids)
+    for i in range(len(features)):
+        vector = dict.fromkeys(overall_features, 0)
+        for key in features[i]:
+            vector[key] = 1
+        vectors.append(np.array(list(vector.values())))
+        records[i].add_vector(np.array(list(vector.values())))
     print("My Kmeans labels:")
-    my_kmeans2(np.array(vectors), k, 0.01)
+    my_kmeans2(np.array(vectors), 5, 0.01)
     print("Sklearn kmeans labels:")
-    get_scikit_kmeans_centroids(k,np.array(vectors),0.01)
+    get_scikit_kmeans_centroids(5,np.array(vectors),0.01)
             
 def get_features(text):
     features = {}
-    words = re.sub('[^A-Za-z0-9 ]+', '', words[14]).lower().split()
-    words = [word for word in words not in stopwords.words('english')]
-	if len(words) < 3:
+    words = re.sub('[^A-Za-z0-9 ]+', '', text).lower().split()
+    words = [word for word in words if word not in stopwords.words('english')]
+    if len(words) < 3:
         return {}
     elif len(words) == 3:
         featureName = ' '.join(words)
@@ -143,7 +150,7 @@ def get_scikit_kmeans_centroids(num_clusters, vectors, tolerance):
             init=vectors[:num_clusters],
             random_state=0,
             tol=tolerance
-    ).fit(vectors).labels_)[:30]) #we overwrite the foggy method
+    ).fit(vectors).labels_)) #we overwrite the foggy method
 
 
 def _closest_cluster_index(feature_x_j, centroids):
@@ -194,7 +201,7 @@ def my_kmeans2(Data, k, e=0.001):
         # Check if within error
         for centroid, last_centroid in zip(centroids, last_centroids):
             if len(last_centroids) > 0 and np.sum((centroid - last_centroid)**2) <= e:
-                print(labels[:30])
+                print(labels)
                 return centroids  # Optimal clustering achieved.
 
         # Save current to t-1
