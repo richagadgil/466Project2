@@ -2,10 +2,10 @@ import sys
 import numpy as np
 import re
 import nltk
+import random
 from sklearn.cluster import KMeans
 from nltk.corpus import stopwords 
-
-
+from nltk.corpus import wordnet as wn
 class Record:
 
     cid = None
@@ -32,6 +32,8 @@ class Record:
         self.vector = vector
 
 def main():
+    
+    nltk.download('omw') 
     args = sys.argv[1:]
     if not args or len(args) != 1:
         print("usage: main filename")
@@ -58,33 +60,45 @@ def main():
             records.append(r)
             #filtered = [word.strip() for word in words]
             #filtered[:] = [x for x in filtered if x != '']
-            feature = get_features(words[14])
-            for name in feature:
-                if name not in overall_features:
-                    overall_features[name] = 0 
-            features.append(feature)
-            num_records += 1
-
-            if words[3] not in c_names:
-                c_names[words[3]] = 1
-            else:
-                c_names[words[3]] += 1
-
-            if(num_records == 3000):
-                break  
+            #feature = get_features(words[14])
+            #for name in feature:
+            #    if name not in overall_features:
+            #        overall_features[name] = 0 
+            #features.append(feature)
+            #num_records += 1
+            #if words[3] not in c_names:
+            #    c_names[words[3]] = 1
+            #else:
+            #    c_names[words[3]] += 1
+            #print(num_records)
+            #if(num_records == 3000):
+            #    break  
     #print(data['data'])
-
-
+    
+    test_records = []
+    for i in range(4000):
+        record = random.choice(records)
+        test_records.append(record)
+        feature = get_features(record.text)
+        for name in feature:
+            if name not in overall_features:
+                overall_features[name] = 0 
+        if record.c_name not in c_names:
+            c_names[record.c_name] = 1
+        else:
+            c_names[record.c_name] +=1
+        features.append(feature)
+              
     for i in range(len(features)):
         vector = dict.fromkeys(overall_features, 0)
         for key in features[i]:
             vector[key] = features[i][key]
         vectors.append(np.array(list(vector.values())))
-        records[i].add_vector(np.array(list(vector.values())))
+        test_records[i].add_vector(np.array(list(vector.values())))
 
 
     print("My Kmeans labels:")
-    clusters = my_kmeans(np.array(records), len(c_names), 0.01)
+    clusters = my_kmeans(np.array(test_records), len(c_names), 0.01)
     contingency_table(c_names, clusters)
 
     #print("Sklearn kmeans labels:")
@@ -128,27 +142,50 @@ def contingency_table(labels, clusters):
     print("Purity", purity_max_sum/purity_total_rows) #Purity Calculation
 
     
+def pre_process(text):
+    words = nltk.word_tokenize(text)
+    tags = nltk.pos_tag(words)
+    lemmatizer = nltk.stem.WordNetLemmatizer()
+    target_tags = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS", "PRP", "PRP$", "RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ"]
+    filtered_words = [tag for tag in tags if tag[1] in target_tags]
+    filtered_words = [word for word in filtered_words if word[0].lower() not in stopwords.words('english')]            
+    filtered_words = [lemmatizer.lemmatize(word[0]) for word in filtered_words]
+    return filtered_words
 
-            
-def get_features(text):
-    words = re.sub('[^A-Za-z0-9 ]+', '', text).lower().split()
-    words = [word for word in words if word not in stopwords.words('english')]
-    features = {}
-    if len(words) < 3:
-        return {}
-    elif len(words) == 3:
-        featureName = ' '.join(words)
-        features[featureName] = len(featureName) 
+def get_wordnet_pos(treebank_tag):
+
+    if treebank_tag.startswith('J'):
+        return wn.ADJ
+    elif treebank_tag.startswith('V'):
+        return wn.VERB
+    elif treebank_tag.startswith('N'):
+        return wn.NOUN
+    elif treebank_tag.startswith('R'):
+        return wn.ADV
     else:
-        for window in range(len(words)-2):
-            featureName = ' '.join(words[window:window+3])
-            if featureName not in features:
-                features[featureName] = len(featureName) 
-            else: 
-                features[featureName] += len(featureName)
-    return features    
+        return ''
 
-
+def get_features(text):
+    filtered_words = pre_process(text)  
+    features = {}
+    if len(filtered_words) < 3:
+        return {}
+    elif len(filtered_words) == 3:
+        just_words = [word[0] for word in filtered_words]
+        featureName = ' '.join(just_words)
+        if featureName in features:
+            features[featureName] += 100
+        else:
+            features[featureName] = 100
+    else:
+        for window in range(len(filtered_words)-2):
+            just_words = [word[0] for word in filtered_words]
+            featureName = ' '.join(just_words[window:window+3])
+            if featureName in features:
+                features[featureName] += 100
+            else:
+                features[featureName] = 100
+    return features
 def get_scikit_kmeans_centroids(num_clusters, vectors, tolerance):
     print(list(KMeans(
             n_clusters=num_clusters,
