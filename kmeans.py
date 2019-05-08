@@ -64,10 +64,10 @@ def main():
         vector = dict.fromkeys(overall_features, 0)
         for key in features[i]:
             vector[key] = 1
-        vectors.append(np.array(list(vector.values())))
+        vectors.append(np.multiply(np.array(list(vector.values())), 100))
         records[i].add_vector(np.array(list(vector.values())))
     print("My Kmeans labels:")
-    my_kmeans2(np.array(vectors), 3, 0.01)
+    my_kmeans(np.array(vectors), 3, 0.01)
     print("Sklearn kmeans labels:")
     get_scikit_kmeans_centroids(3,np.array(vectors),0.01)
             
@@ -86,62 +86,6 @@ def get_features(text):
             features[featureName] = 1
     return features    
 
-def _closest_cluster_index(feature_x_j, centroids):
-    closest_dist = np.inf
-    closest_cluster_index = 0
-
-    for index, centroid_i in enumerate(centroids):
-        euclidean_distance = np.linalg.norm(feature_x_j.vector - centroid_i)
-
-        if euclidean_distance < closest_dist:
-            closest_dist = euclidean_distance
-            closest_cluster_index = index
-
-    return closest_cluster_index
-
-
-def my_kmeans(Records, k, e=0.001):
-    """
-    :param Data: Raw return from _generate_points()
-    :param k: Number of clusters to create
-    :param e: Maximum error threshold
-    :return: Final centroids and a NumPy array of features.
-    """
-
-    # we start with the first k points given as the initial centroids
-    last_centroids = []
-    centroids = []
-    for i in range(k):
-        last_centroids.append(Records[i].vector)
-        centroids.append(Records[i].vector)    
-    i = 0 
-    while True:
-        labels = [0] * len(Records)
-        clusters = [[] for __ in range(k)]
-        # Cluster assignment step
-        counter = 0
-        for feature_x_j in Records:    
-            cci = _closest_cluster_index(feature_x_j, centroids)
-            clusters[cci].append(feature_x_j)
-            labels[counter] = cci
-            counter+=1
-
-
-        # Centroid update step
-        for index, cluster in enumerate(clusters):
-            clusters_vec = []
-            for i in range(len(cluster)):
-                clusters_vec.append(cluster[i].vector)
-            centroids[index] = np.average(clusters_vec, axis = 0)
-
-        # Check if within error
-        for centroid, last_centroid in zip(centroids, last_centroids):
-            if len(last_centroids) > 0 and np.sum((centroid- last_centroid)**2) <= e:
-                print(labels)
-                return clusters  # Optimal clustering achieved.
-
-        # Save current to t-1
-        last_centroids = np.copy(centroids)
 
 def get_scikit_kmeans_centroids(num_clusters, vectors, tolerance):
     print(list(KMeans(
@@ -167,7 +111,7 @@ def _closest_cluster_index(feature_x_j, centroids):
     return closest_cluster_index
 
 
-def my_kmeans2(Data, k, e=0.001):
+def my_kmeans(Data, k, e=0.001):
     """
     :param Data: Raw return from _generate_points()
     :param k: Number of clusters to create
@@ -196,10 +140,7 @@ def my_kmeans2(Data, k, e=0.001):
 
         # Centroid update step
         for index, cluster in enumerate(clusters):
-            if(len(clusters[index]) == 0):
-                centroids[index] = 0
-            else:
-                centroids[index] = np.average(clusters[index], axis = 0)
+            centroids[index] = np.average(clusters[index], axis = 0)
 
         # Check if within error
         for centroid, last_centroid in zip(centroids, last_centroids):
