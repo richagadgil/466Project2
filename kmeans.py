@@ -63,8 +63,8 @@ def main():
     for i in range(len(features)):
         vector = dict.fromkeys(overall_features, 0)
         for key in features[i]:
-            vector[key] = 1
-        vectors.append(np.multiply(np.array(list(vector.values())), 100))
+            vector[key] = features[i][key]
+        vectors.append(np.array(list(vector.values())))
         records[i].add_vector(np.array(list(vector.values())))
     print("My Kmeans labels:")
     my_kmeans(np.array(vectors), 3, 0.01)
@@ -72,18 +72,21 @@ def main():
     get_scikit_kmeans_centroids(3,np.array(vectors),0.01)
             
 def get_features(text):
-    features = {}
     words = re.sub('[^A-Za-z0-9 ]+', '', text).lower().split()
     words = [word for word in words if word not in stopwords.words('english')]
+    features = {}
     if len(words) < 3:
         return {}
     elif len(words) == 3:
         featureName = ' '.join(words)
-        features[featureName] = 1 
+        features[featureName] = len(featureName) 
     else:
         for window in range(len(words)-2):
             featureName = ' '.join(words[window:window+3])
-            features[featureName] = 1
+            if featureName not in features:
+                features[featureName] = len(featureName) 
+            else: 
+                features[featureName] += len(featureName)
     return features    
 
 
