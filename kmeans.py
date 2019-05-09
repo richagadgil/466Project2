@@ -82,7 +82,7 @@ def main():
     #print(data['data'])
 
     test_records = []
-    for i in range(4000):
+    for i in range(400):
         record = random.choice(records)
         test_records.append(record)
         feature = get_features(record.text)
@@ -104,13 +104,12 @@ def main():
 
 
     print("My Kmeans labels:")
-    for i in range(5, 16):
+    for i in range(5, 6):
         print("K:", i)
-        clusters = my_kmeans(np.array(test_records), i, 0.01)
+        clusters = my_kmeans(test_records, i, 0.01)
         contingency_table(c_names, clusters)
-
-    #print("Sklearn kmeans labels:")
-    #get_scikit_kmeans_centroids(3,np.array(vectors),0.01)
+        print("Sklearn kmeans labels:")
+        get_scikit_kmeans_centroids(i,np.array(vectors),0.01)
 
 
 
@@ -159,6 +158,7 @@ def pre_process(text):
     #words = nltk.word_tokenize(text)
     #tags = nltk.pos_tag(words)
     lemmatizer = nltk.stem.WordNetLemmatizer()
+    porter_stemmer = nltk.stem.porter.PorterStemmer() 
     #target_tags = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS", "PRP", "PRP$", "RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ"]
     #target_tags = ["NN", "NNP", "NNPS", "NNS"]
     #filtered_words = [tag for tag in tags if tag[1] in target_tags]
@@ -172,26 +172,9 @@ def pre_process(text):
     text=re.sub("(\\d|\\W)+"," ",text)
     words = nltk.word_tokenize(text)
     filtered_words = [word for word in words if word not in stopwords.words('english')]
-    filtered_words = [lemmatizer.lemmatize(word) for word in filtered_words]
-
-
-
-
-
+    filtered_words = [porter_stemmer.stem(filtered_word) for filtered_word in filtered_words]
+    
     return filtered_words
-
-def get_wordnet_pos(treebank_tag):
-
-    if treebank_tag.startswith('J'):
-        return wn.ADJ
-    elif treebank_tag.startswith('V'):
-        return wn.VERB
-    elif treebank_tag.startswith('N'):
-        return wn.NOUN
-    elif treebank_tag.startswith('R'):
-        return wn.ADV
-    else:
-        return ''
 
 def get_features(text):
     filtered_words = pre_process(text)  
@@ -227,7 +210,7 @@ def get_scikit_kmeans_centroids(num_clusters, vectors, tolerance):
             tol=tolerance
     ).fit(vectors).labels_)) #we overwrite the foggy method
 
-
+    
 def _closest_cluster_index(feature_x_j, centroids):
     closest_dist = np.inf
     closest_cluster_index = 0
@@ -247,7 +230,6 @@ def _closest_cluster_index(feature_x_j, centroids):
 
     return closest_cluster_index
 
-
 def my_kmeans(Data, k, e=0.001):
     """
     :param Data: Raw return from _generate_points()
@@ -262,7 +244,6 @@ def my_kmeans(Data, k, e=0.001):
     centroids = [x.vector for x in Data[:k]]
 
 
-
     i = 0
     while True:
         clusters = [[] for __ in range(k)]
@@ -271,22 +252,22 @@ def my_kmeans(Data, k, e=0.001):
         # Cluster assignment step
         counter = 0
         #for feature_x_j in Data:
-        for feature_x_j in Data:
+        for i in range(len(Data)):
             #print(type(feature_x_j))
+            feature_x_j = Data[i]
             cci = _closest_cluster_index(feature_x_j, centroids)
             clusters[cci].append(feature_x_j)
             labels[counter] = cci 
             counter += 1
 
         # Centroid update step
-        for index, cluster in enumerate(clusters):
-            #centroids[index] = np.average(clusters[index], axis = 0)
-            centroids[index] = np.average([x.vector for x in clusters[index]], axis = 0)
+        for i in range(k):
+            centroids[i] = np.mean([record.vector for record in clusters[i]] , axis = 0)
             
         # Check if within error
         for centroid, last_centroid in zip(centroids, last_centroids):
             if len(last_centroids) > 0 and np.sum((centroid - last_centroid)**2) <= e:
-                #print(labels)
+                print(labels)
                 return clusters  # Optimal clustering achieved.
 
         # Save current to t-1
