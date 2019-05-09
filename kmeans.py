@@ -6,9 +6,7 @@ import random
 from sklearn.cluster import KMeans
 from nltk.corpus import stopwords 
 from nltk.corpus import wordnet as wn
-nltk.download('punkt')
-nltk.download('averaged_perceptron_tagger')
-nltk.download('wordnet')
+
 
 class Record:
 
@@ -104,12 +102,15 @@ def main():
 
 
     print("My Kmeans labels:")
-    for i in range(5, 6):
+    for i in range(5, 8):
         print("K:", i)
         clusters = my_kmeans(test_records, i, 0.01)
         contingency_table(c_names, clusters)
         print("Sklearn kmeans labels:")
-        get_scikit_kmeans_centroids(i,np.array(vectors),0.01)
+        #get_scikit_kmeans_centroids(i,np.array(vectors),0.01)
+
+        # USED TO TEST AGAINST SCIKIT LEARN RESULTS 
+        # print(len([i for i, j in zip(my_labels, scikit_labels) if i == j]))
 
 
 
@@ -202,7 +203,7 @@ def get_features(text):
 
     return features
 def get_scikit_kmeans_centroids(num_clusters, vectors, tolerance):
-    print(list(KMeans(
+   print(list(KMeans(
             n_clusters=num_clusters,
             n_init=1,
             init=vectors[:num_clusters],
@@ -218,9 +219,6 @@ def _closest_cluster_index(feature_x_j, centroids):
 
     
     for index, centroid_i in enumerate(centroids):
-        #euclidean_distance = np.linalg.norm(feature_x_j - centroid_i)
-        #print("hi\n")
-        #print(type(centroid_i))
         euclidean_distance = np.linalg.norm(feature_x_j.vector - centroid_i) ** 2
        
 
@@ -264,10 +262,12 @@ def my_kmeans(Data, k, e=0.001):
         for i in range(k):
             centroids[i] = np.mean([record.vector for record in clusters[i]] , axis = 0)
             
-        # Check if within error
-        for centroid, last_centroid in zip(centroids, last_centroids):
-            if len(last_centroids) > 0 and np.sum((centroid - last_centroid)**2) <= e:
-                print(labels)
+        # Check if within error TESTING
+        if len(last_centroids) > 0:
+            sum = 0
+            for centroid, last_centroid in zip(centroids, last_centroids):
+                    sum += np.sum(centroid - last_centroid) ** 2
+            if(sum <= e):
                 return clusters  # Optimal clustering achieved.
 
         # Save current to t-1
