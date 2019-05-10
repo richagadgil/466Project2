@@ -1,10 +1,17 @@
 import sys
 import os
+import pandas as pd
 
-
-def split_sets():
+def split_sets(data, test_size):
     #Split data into training and testing
-    return []
+    if isinstance(test_size, float):
+        test_size = round(test_size * len(data))
+    indices = data.index.tolist()
+    test_indices = random.sample(population = indices, k=test_size)
+
+    test_data = data.loc[test_indices]
+    train_data = data.drop(test_indices)
+    return train_data, test_data
 
 def findPurity(classSizes, partitionSize):
     maxPurity = classSizes[0]/partitionSize
@@ -34,7 +41,8 @@ def decisionTree(training, leaf_size, purity_thresh):
         # create leaf node labeled as majority_class
         return
     #Do Rest of code
-    
+            
+
 def getFeatures(record):
     #Get features code from kmeans
 
