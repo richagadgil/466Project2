@@ -62,6 +62,7 @@ def main():
         text = sys.argv[2]
         text = pre_process(text)
         getFeatures(text)        
-    
+        #Finish this
+        
 if __name__ == '__main__':
     main()
