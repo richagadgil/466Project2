@@ -13,13 +13,9 @@ def split_sets(data, test_size):
     train_data = data.drop(test_indices)
     return train_data, test_data
 
-def findPurity(classSizes, partitionSize):
-    maxPurity = classSizes[0]/partitionSize
-    for size in classSizes:
-        purity = size/partitionSize
-        if purity > maxPurity:
-            maxPurity = purity
-    return purity
+def findPurity(data):
+    label_col = 'c_name'
+    return (df[label_col].value_counts(normalize=True))[0]
 
 def getMajorityClass(classSizes, partitionSize):
     maxPurity = classSizes[0]/partitionSize
