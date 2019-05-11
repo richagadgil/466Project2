@@ -2,6 +2,8 @@ import sys
 import os
 import pandas as pd
 import numpy as np
+from kmeans import Record
+
 
 def split_sets(data, test_size):
     #Split data into training and testing
@@ -18,10 +20,11 @@ def findPurity(data):
     label_col = 'c_name'
     return (data[label_col].value_counts(normalize=True))[0]
 
-def get_potential_splits(data):
+#input: training dataframe.values
+def get_potential_splits(data_values):
     potential_splits = {}
-    _, n_cols = data.shape
-    for col_index in range(n_cols - 1):
+    _, n_cols = data_values.shape
+    for col_index in range(n_cols - 1): # "-1 because last column is gonna be labels"
         potential_splits[col_index] = []
         vals = data[:, col_index]
         unique_vals = np.unique(vals)
@@ -33,6 +36,13 @@ def get_potential_splits(data):
                 potential_split = (curr_val + prev_val)/2
                 potential_splits[col_index].append(potential_split)
     return potential_splits        
+
+def split_data(data, split_col, split_value):
+    split_col_values = data[:, split_col]
+    data_below = data[split_col_values <= split_value]
+    data_above = data[split_col_values > split_value]    
+
+    return data_below, data_above
 
 def getMajorityClass(classSizes, partitionSize):
     maxPurity = classSizes[0]/partitionSize
@@ -57,11 +67,13 @@ def decisionTree(training, leaf_size, purity_thresh):
             
 def getFeatures(record):
     #Get features code from kmeans
-
+    return[]
 def pre_process(text):
     #Pre processing code from kmeans
-
+    return []
 def main():
+    #IMPLEMENT USING PANDAS DATAFRAME
+    print("Hello")
     args = sys.argv[1:]
     if(args[2] == "-h"):
         entireHearing = True
