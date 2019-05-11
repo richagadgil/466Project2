@@ -37,12 +37,39 @@ def get_potential_splits(data_values):
                 potential_splits[col_index].append(potential_split)
     return potential_splits        
 
+def calculate_entropy(data):
+    label_column = data["c_name"]
+    _, counts = np.unique(label_column, return_counts = True)
+    probabilities = counts/counts.sum()
+    entropy = sum(probabilities * -np.log2(probabilities))    
+    return entropy
+
+def calculate_overall_entropy(data_below, data_above):
+    num_points = len(data_below) + len(data_above)
+    weight_below = len(data_below) / num_points
+    weight_above = len(data_above) / num_points
+    overall_entropy = (weight_below * calculate_entropy(data_below) + weight_above * calculate_entropy(data_above))
+    return overall_entropy
+
+def determine_best_split(data, potential_splits):
+    overall_entropy = 1000
+    for col_index in potential_splits:
+        for value in potential_splits[col_index]:
+            data_below, data_above = split_data(data, col_index, value)
+            curr_overall_entropy = calculate_overall_entropy(data_below, data_above)
+            if(curr_overall_entropy <= overall_entropy):
+                overall_entropy = curr_overall_entropy
+                best_split_col = col_index
+                best_split_val = value
+    return best_split_col, best_split_val
+
 def split_data(data, split_col, split_value):
     split_col_values = data[:, split_col]
     data_below = data[split_col_values <= split_value]
     data_above = data[split_col_values > split_value]    
 
     return data_below, data_above
+
 
 def getMajorityClass(classSizes, partitionSize):
     maxPurity = classSizes[0]/partitionSize
@@ -83,10 +110,9 @@ def main():
     if(entireHearing):
         #Handle this case
     else:
-        text = sys.argv[2]
-        text = pre_process(text)
-        getFeatures(text)        
-        #Finish this
+        text = sys.argv[2]        
+        #Process text, create Record objects and populate with feature vectors
+        #Create dataframe with columns of each vector value and the label(c_name)
         
 if __name__ == '__main__':
     main()
