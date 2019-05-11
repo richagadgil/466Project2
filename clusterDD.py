@@ -102,11 +102,11 @@ def main():
 
 
     print("My Kmeans labels:")
-    for i in range(5, 8):
+    for i in range(1, len(c_names)):
         print("K:", i)
         clusters = my_kmeans(test_records, i, 0.01)
         contingency_table(c_names, clusters)
-        print("Sklearn kmeans labels:")
+        #print("Sklearn kmeans labels:")
         #get_scikit_kmeans_centroids(i,np.array(vectors),0.01)
 
         # USED TO TEST AGAINST SCIKIT LEARN RESULTS 
@@ -156,51 +156,81 @@ def contingency_table(labels, clusters):
 
     
 def pre_process(text):
-    #words = nltk.word_tokenize(text)
-    #tags = nltk.pos_tag(words)
     lemmatizer = nltk.stem.WordNetLemmatizer()
     porter_stemmer = nltk.stem.porter.PorterStemmer() 
-    #target_tags = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS", "PRP", "PRP$", "RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ"]
-    #target_tags = ["NN", "NNP", "NNPS", "NNS"]
-    #filtered_words = [tag for tag in tags if tag[1] in target_tags]
-    #filtered_words = [word for word in filtered_words if word[0].lower() not in stopwords.words('english')]            
-    #filtered_words = [lemmatizer.lemmatize(word[0]) for word in filtered_words]
-    #print(filtered_words)
-    
+    target_tags = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS", "PRP", "PRP$","RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ", "CD"]
+   
 
-    text = re.sub('[^a-zA-Z]', ' ', text)
+    text = re.sub('[^a-zA-Z0-9]', ' ', text)
     text = text.lower()
-    text=re.sub("(\\d|\\W)+"," ",text)
     words = nltk.word_tokenize(text)
     filtered_words = [word for word in words if word not in stopwords.words('english')]
-    filtered_words = [porter_stemmer.stem(filtered_word) for filtered_word in filtered_words]
-    
+    tags = nltk.pos_tag(words)
+    filtered_words = [word for word in filtered_words if len(word) > 3]
+    filtered_words = [tag[0] for tag in tags if tag[1] in target_tags]
+    filtered_words = [lemmatizer.lemmatize(filtered_word[0]) for filtered_word in filtered_words]
     return filtered_words
 
 def get_features(text):
     filtered_words = pre_process(text)  
     features = {}
-    # if len(filtered_words) < 2:
-    #     return {}
-    # elif len(filtered_words) == 2:
-    #     featureName = ' '.join(filtered_words)
-    #     if featureName in features:
-    #         features[featureName] += 100
-    #     else:
-    #         features[featureName] = 100
-    # else:
-    #       for window in range(len(filtered_words)-1):
-    #         featureName = ' '.join(filtered_words[window:window+2])
-    #         if featureName in features:
-    #             features[featureName] += 100
-    #         else:
-    #             features[featureName] = 100
+    #if len(filtered_words) < 3:
+    #    return {}
+    #elif len(filtered_words) == 3:
+    #    featureName = ' '.join(filtered_words)
+    #    if featureName in features:
+    #        features[featureName] += 1
+    #    else:
+    #        features[featureName] = 1
+    #else:
+    #    for window in range(len(filtered_words)-2):
+    #        featureName = ' '.join(filtered_words[window:window+3])
+    #        if featureName in features:
+    #            features[featureName] += 1
+    #        else:
+    #            features[featureName] = 1
+    tag_counts = {}
+    tag_counts["N"] = 0
+    tag_counts["ADJ"] = 0
+    tag_counts["V"] = 0
+    tag_counts["ADV"] = 0
+    tag_counts["NUM"] = 0
+    charLength = 0
+    with_synonyms = {}
+     
+    if len(filtered_words) == 0:
+        return {}
+    counter = 1
     for word in filtered_words:
-       if word in features:
-           features[word] += 100
-       else:
-           features[word] = 100
-
+        synsets = wn.synsets(word)
+        if len(synsets) == 0:
+            continue
+        
+        if word not in features:
+            features[word] = 1
+        else:
+            features[word] += 1
+       #charLength += len(word)
+       # if tag.startswith('N') or tag.startswith('P'):
+       #     tag_counts["N"] += 1
+       # elif tag.startswith('J'):
+       #     tag_counts["ADJ"] += 1
+       # elif tag.startswith('V'):
+       #     tag_counts["V"] += 1
+       # elif tag.startswith('R'):
+       #     tag_counts["ADV"] += 1
+       # else:
+       #     tag_counts["NUM"] += 1
+    
+    #features["sentenceLength"] = len(filtered_words)  
+    #features['avgWordLength'] = charLength / len(filtered_words)  
+    #features["numNouns"] = tag_counts["N"] 
+    #features["numVerbs"] = tag_counts["V"] 
+    #features["numAdj"] = tag_counts["ADJ"] 
+    #features["numAdv"] = tag_counts["ADV"] 
+    #features["numNum"] = tag_counts["NUM"] 
+    
+ #   print(list(features.values()))
     return features
 def get_scikit_kmeans_centroids(num_clusters, vectors, tolerance):
    print(list(KMeans(
