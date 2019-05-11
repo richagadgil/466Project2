@@ -16,9 +16,12 @@ def split_sets(data, test_size):
     train_data = data.drop(test_indices)
     return train_data, test_data
 
-def findPurity(data):
+def check_purity(data, purity_thresh):
     label_col = 'c_name'
-    return (data[label_col].value_counts(normalize=True))[0]
+    if (data[label_col].value_counts(normalize=True))[0] >= purity_thresh:
+        return True
+    else:
+        return False
 
 #input: training dataframe.values
 def get_potential_splits(data_values):
@@ -35,8 +38,9 @@ def get_potential_splits(data_values):
                 prev_val = unique_vals[index-1]
                 potential_split = (curr_val + prev_val)/2
                 potential_splits[col_index].append(potential_split)
-    return potential_splits        
-
+    return potential_splits
+        
+#Input: Dataframe
 def calculate_entropy(data):
     label_column = data["c_name"]
     _, counts = np.unique(label_column, return_counts = True)
@@ -44,6 +48,7 @@ def calculate_entropy(data):
     entropy = sum(probabilities * -np.log2(probabilities))    
     return entropy
 
+#Input: Both sides of a split(Data frames)
 def calculate_overall_entropy(data_below, data_above):
     num_points = len(data_below) + len(data_above)
     weight_below = len(data_below) / num_points
@@ -51,6 +56,7 @@ def calculate_overall_entropy(data_below, data_above):
     overall_entropy = (weight_below * calculate_entropy(data_below) + weight_above * calculate_entropy(data_above))
     return overall_entropy
 
+#Input: Dataframe
 def determine_best_split(data, potential_splits):
     overall_entropy = 1000
     for col_index in potential_splits:
@@ -81,7 +87,30 @@ def getMajorityClass(classSizes, partitionSize):
             majority_class = i
     return majority_class
 
-def decisionTree(training, leaf_size, purity_thresh):
+def classify_data(data):
+    label_column = data["c_name"]
+    unique_classes, counts_unique_classes = np.unique(label_column, return_counts=True)
+    index = counts_unique_classes.argmax()
+    classification = unique_classes[index]
+    return classification
+
+#Representation of Decision Tree: Dictionary
+#Key: Question (petal width <= 0.8)
+#Value: [yes_answer, no_answer]
+def decision_tree_algorithm(training, counter = 0, purity_thresh):
+    # data preparations
+    if counter == 0:
+        data = training.values
+    else:
+        data = training
+    
+    # base case
+    if(check_purity(data)):
+        classification = classify_data(data)
+        return classification
+    #recursive part
+    else:
+        
     partitionSize = len(training)
     classSizes = []
     # compute class sizes and put them in classSizes array 
@@ -113,6 +142,6 @@ def main():
         text = sys.argv[2]        
         #Process text, create Record objects and populate with feature vectors
         #Create dataframe with columns of each vector value and the label(c_name)
-        
+        #Split it into training and testing sets, pass in training set to decision tree algorithm        
 if __name__ == '__main__':
     main()
