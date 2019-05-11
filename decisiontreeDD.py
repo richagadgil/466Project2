@@ -1,6 +1,7 @@
 import sys
 import os
 import pandas as pd
+import numpy as np
 
 def split_sets(data, test_size):
     #Split data into training and testing
@@ -15,7 +16,23 @@ def split_sets(data, test_size):
 
 def findPurity(data):
     label_col = 'c_name'
-    return (df[label_col].value_counts(normalize=True))[0]
+    return (data[label_col].value_counts(normalize=True))[0]
+
+def get_potential_splits(data):
+    potential_splits = {}
+    _, n_cols = data.shape
+    for col_index in range(n_cols - 1):
+        potential_splits[col_index] = []
+        vals = data[:, col_index]
+        unique_vals = np.unique(vals)
+        
+        for index in range(len(unique_vals)):
+            if index != 0:
+                curr_val = unique_vals[index]
+                prev_val = unique_vals[index-1]
+                potential_split = (curr_val + prev_val)/2
+                potential_splits[col_index].append(potential_split)
+    return potential_splits        
 
 def getMajorityClass(classSizes, partitionSize):
     maxPurity = classSizes[0]/partitionSize
@@ -38,7 +55,6 @@ def decisionTree(training, leaf_size, purity_thresh):
         return
     #Do Rest of code
             
-
 def getFeatures(record):
     #Get features code from kmeans
 
