@@ -97,7 +97,7 @@ def classify_data(data):
 #Representation of Decision Tree: Dictionary
 #Key: Question (petal width <= 0.8)
 #Value: [yes_answer, no_answer]
-def decision_tree_algorithm(training, counter = 0, purity_thresh):
+def decision_tree(training, counter = 0, purity_thresh):
     # data preparations
     if counter == 0:
         data = training.values
@@ -110,16 +110,23 @@ def decision_tree_algorithm(training, counter = 0, purity_thresh):
         return classification
     #recursive part
     else:
+        counter += 1
+        # helper functions
+        potential_splits = get_potential_splits(data)
+        split_column, split_value = determine_best_split(data, potential_splits)
+        data_below, data_above = split_data(data, split_column, split_value)
         
-    partitionSize = len(training)
-    classSizes = []
-    # compute class sizes and put them in classSizes array 
-    purity = findPurity(classSizes, partitionSize)
-    if (partitionSize <= leaf_size) or (purity >= purity_thresh):
-        majority_class = getMajorityClass(classSizes, partitionSize)
-        # create leaf node labeled as majority_class
-        return
-    #Do Rest of code
+        #instantiate subtree
+        question = "{} <= {}".format(split_column, split_value)
+        sub_tree = {question: []}
+        
+        # find answers (recursion)
+        yes_answer = decision_tree(data_below, counter)
+        no_answer = decision_tree(data_above, counter)
+        
+        sub_tree[question].append(yes_answer)
+        sub_tree[question].append(no_answer)
+        return sub_tree
             
 def getFeatures(record):
     #Get features code from kmeans
