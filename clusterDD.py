@@ -81,11 +81,18 @@ def main():
             #if(num_records == 3000):
             #    break  
     #print(data['data'])
+    
+    
+    test_records = set()
 
-    test_records = []
     for i in range(4000):
         record = random.choice(records)
-        test_records.append(record)
+        while record in test_records:
+            record = random.choice(records)
+        test_records.add(record)
+    
+    test_records = list(test_records)
+    for record in test_records:
         feature = get_features(record.text)
         for name in feature:
             if name not in overall_features:
@@ -100,7 +107,6 @@ def main():
         vector = dict.fromkeys(overall_features, 0)
         for key in features[i]:
             vector[key] = features[i][key]
-
         
         vectors.append(np.array(list(vector.values())))
         test_records[i].add_vector(np.array(list(vector.values())))
@@ -163,8 +169,8 @@ def contingency_table(labels, clusters):
 def pre_process(text):
     lemmatizer = nltk.stem.WordNetLemmatizer()
     porter_stemmer = nltk.stem.porter.PorterStemmer() 
-    target_tags = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS", "PRP", "PRP$","RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ", "CD"]
-   
+    #target_tags = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS", "PRP", "PRP$","RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ", "CD"]
+    target_tags = ["JJ", "JJK", "JJS", "NN", "NNP","NNPS", "NNS"] 
 
     text = re.sub('[^a-zA-Z0-9]', ' ', text)
     text = text.lower()
@@ -174,7 +180,6 @@ def pre_process(text):
     tags = nltk.pos_tag(words)
     filtered_words = [word for word in filtered_words if len(word) > 3]
     filtered_words = [tag[0] for tag in tags if tag[1] in target_tags]
-
     filtered_words = [lemmatizer.lemmatize(filtered_word) for filtered_word in filtered_words]
      
     return filtered_words
@@ -213,7 +218,7 @@ def get_features(text):
         tag = tag[1]
 
         wordnet_tag = penn2morphy(tag)
-        
+    
         synset = wn.synsets(word, wordnet_tag)
 
 
@@ -260,7 +265,6 @@ def get_scikit_kmeans_centroids(num_clusters, vectors, tolerance):
             tol=tolerance
     ).fit(vectors).labels_)) #we overwrite the foggy method
 
-    
 def _closest_cluster_index(feature_x_j, centroids):
     closest_dist = np.inf
     closest_cluster_index = 0
@@ -309,8 +313,28 @@ def my_kmeans(Data, k, e=0.001):
 
         # Centroid update step
         for i in range(k):
-            centroids[i] = np.mean([record.vector for record in clusters[i]] , axis = 0)
-            
+            if len(clusters[i]) != 0:
+                centroids[i] = np.mean([record.vector for record in clusters[i]] , axis = 0)
+            else:
+                max_len = 0
+                max_cluster = None
+                index = -1
+                for j in range(k):
+                    if len(cluster[j]) > max_len:
+                        max_len = len(cluster[j])
+                        max_cluster = cluster[j]
+                        index = j
+                max_dist = 0
+                max_point = None
+                for point in max_cluster:
+                    dist = np.linalg.norm(point.vector - centroids[j])                                
+                    if dist > max_dist:
+                        max_point = point
+                        max_dist = dist
+                max_cluster.remove(max_point)
+                centroid[i] = max_point.vector
+                centroid[j] = np.mean([record.vector for record in max_cluster], axis=0)
+                        
         # Check if within error TESTING
         if len(last_centroids) > 0:
             sum = 0
