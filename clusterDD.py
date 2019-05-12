@@ -117,10 +117,11 @@ def main():
         print("K:", i)
         clusters = my_kmeans(test_records, i, 0.01)
         contingency_table(c_names, clusters)
-
+        
+        #print("SciKitLearn Labels:")
+        #get_scikit_kmeans_centroids(34, np.array(vectors), 0.01)
         # USED TO TEST AGAINST SCIKIT LEARN RESULTS 
-        #print(len([i for i, j in zip(my_labels, scikit_labels) if i == j]))
-
+        #print(len([i for i, j in zip(my_labels, sklabels) if i == j]))
 
 
 
@@ -255,13 +256,13 @@ def get_features(text):
  #   print(list(features.values()))
     return features
 def get_scikit_kmeans_centroids(num_clusters, vectors, tolerance):
-   print(list(KMeans(
+    return list(KMeans(
             n_clusters=num_clusters,
             n_init=1,
             init=vectors[:num_clusters],
             random_state=0,
             tol=tolerance
-    ).fit(vectors).labels_)) #we overwrite the foggy method
+    ).fit(vectors).labels_) #we overwrite the foggy method
 
 def _closest_cluster_index(feature_x_j, centroids):
     closest_dist = np.inf
@@ -338,6 +339,7 @@ def my_kmeans(Data, k, e=0.001):
             for centroid, last_centroid in zip(centroids, last_centroids):
                 sum += np.sum(centroid - last_centroid) ** 2
             if(sum <= e):
+                #return labels
                 return clusters  # Optimal clustering achieved.
 
         # Save current to t-1
