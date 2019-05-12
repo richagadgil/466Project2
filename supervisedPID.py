@@ -22,24 +22,6 @@ from nltk.corpus import wordnet as wn
 import nltk
 import re
 
-def pre_process(text):
-    lemmatizer = nltk.stem.WordNetLemmatizer()
-    porter_stemmer = nltk.stem.porter.PorterStemmer() 
-    target_tags = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS", "PRP", "PRP$","RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ", "CD"]
-   
-
-    text = re.sub('[^a-zA-Z0-9]', ' ', text)
-    text = text.lower()
-    words = nltk.word_tokenize(text)
-   
-    filtered_words = [word for word in words if word not in stopwords.words('english')]
-    tags = nltk.pos_tag(words)
-    filtered_words = [word for word in filtered_words if len(word) > 3]
-    filtered_words = [tag[0] for tag in tags if tag[1] in target_tags]
-
-    filtered_words = [lemmatizer.lemmatize(filtered_word) for filtered_word in filtered_words]
-
-    return ''.join(filtered_words)
 
 def pre_processor(df):
     lemmatizer = nltk.stem.WordNetLemmatizer()
