@@ -6,6 +6,7 @@ import random
 from sklearn.cluster import KMeans
 from nltk.corpus import stopwords 
 from nltk.corpus import wordnet as wn
+import time
 
 
 class Record:
@@ -34,6 +35,8 @@ class Record:
         self.vector = vector
 
 def main():
+
+    np.seterr(all='print')
     
     nltk.download('omw') 
     args = sys.argv[1:]
@@ -80,7 +83,7 @@ def main():
     #print(data['data'])
 
     test_records = []
-    for i in range(400):
+    for i in range(4000):
         record = random.choice(records)
         test_records.append(record)
         feature = get_features(record.text)
@@ -90,19 +93,21 @@ def main():
         if record.c_name not in c_names:
             c_names[record.c_name] = 1
         else:
-            c_names[record.c_name] +=1
+            c_names[record.c_name] += 1
         features.append(feature)
-              
+
     for i in range(len(features)):
         vector = dict.fromkeys(overall_features, 0)
         for key in features[i]:
             vector[key] = features[i][key]
+
+        
         vectors.append(np.array(list(vector.values())))
         test_records[i].add_vector(np.array(list(vector.values())))
 
 
     print("My Kmeans labels:")
-    for i in range(1, len(c_names)):
+    for i in range(len(c_names) - 1, len(c_names)):
         print("K:", i)
         clusters = my_kmeans(test_records, i, 0.01)
         contingency_table(c_names, clusters)
@@ -164,31 +169,30 @@ def pre_process(text):
     text = re.sub('[^a-zA-Z0-9]', ' ', text)
     text = text.lower()
     words = nltk.word_tokenize(text)
+   
     filtered_words = [word for word in words if word not in stopwords.words('english')]
     tags = nltk.pos_tag(words)
     filtered_words = [word for word in filtered_words if len(word) > 3]
     filtered_words = [tag[0] for tag in tags if tag[1] in target_tags]
-    filtered_words = [lemmatizer.lemmatize(filtered_word[0]) for filtered_word in filtered_words]
+
+    filtered_words = [lemmatizer.lemmatize(filtered_word) for filtered_word in filtered_words]
+     
     return filtered_words
 
+def penn2morphy(penntag, returnNone=False):
+    morphy_tag = {'NN':wn.NOUN, 'JJ':wn.ADJ,
+                  'VB':wn.VERB, 'RB':wn.ADV}
+    try:
+        return morphy_tag[penntag[:2]]
+    except:
+        return None 
+
 def get_features(text):
-    filtered_words = pre_process(text)  
+    filtered_words = pre_process(text) 
+
+
     features = {}
-    #if len(filtered_words) < 3:
-    #    return {}
-    #elif len(filtered_words) == 3:
-    #    featureName = ' '.join(filtered_words)
-    #    if featureName in features:
-    #        features[featureName] += 1
-    #    else:
-    #        features[featureName] = 1
-    #else:
-    #    for window in range(len(filtered_words)-2):
-    #        featureName = ' '.join(filtered_words[window:window+3])
-    #        if featureName in features:
-    #            features[featureName] += 1
-    #        else:
-    #            features[featureName] = 1
+   
     tag_counts = {}
     tag_counts["N"] = 0
     tag_counts["ADJ"] = 0
@@ -201,35 +205,50 @@ def get_features(text):
     if len(filtered_words) == 0:
         return {}
     counter = 1
+
     for word in filtered_words:
-        synsets = wn.synsets(word)
-        if len(synsets) == 0:
-            continue
+
+        tag = nltk.pos_tag([word])
+        tag = tag[0]
+        tag = tag[1]
+
+        wordnet_tag = penn2morphy(tag)
         
+        synset = wn.synsets(word, wordnet_tag)
+
+
         if word not in features:
             features[word] = 1
         else:
             features[word] += 1
-       #charLength += len(word)
-       # if tag.startswith('N') or tag.startswith('P'):
-       #     tag_counts["N"] += 1
-       # elif tag.startswith('J'):
-       #     tag_counts["ADJ"] += 1
-       # elif tag.startswith('V'):
-       #     tag_counts["V"] += 1
-       # elif tag.startswith('R'):
-       #     tag_counts["ADV"] += 1
-       # else:
-       #     tag_counts["NUM"] += 1
-    
-    #features["sentenceLength"] = len(filtered_words)  
-    #features['avgWordLength'] = charLength / len(filtered_words)  
-    #features["numNouns"] = tag_counts["N"] 
-    #features["numVerbs"] = tag_counts["V"] 
-    #features["numAdj"] = tag_counts["ADJ"] 
-    #features["numAdv"] = tag_counts["ADV"] 
-    #features["numNum"] = tag_counts["NUM"] 
-    
+
+        charLength += len(word)
+
+        if tag.startswith('N') or tag.startswith('P'):
+             tag_counts["N"] += 1
+        elif tag.startswith('J'):
+             tag_counts["ADJ"] += 1
+        elif tag.startswith('V'):
+            tag_counts["V"] += 1
+        elif tag.startswith('R'):
+            tag_counts["ADV"] += 1
+        else:
+            tag_counts["NUM"] += 1
+
+    tag_counts["N"] = tag_counts["N"]
+    tag_counts["ADJ"] = tag_counts["ADJ"]
+    tag_counts["V"] = tag_counts["V"]
+    tag_counts["ADV"] = tag_counts["ADV"]
+    tag_counts["NUM"] = tag_counts["NUM"]
+
+    #features["sentenceLength"] = len(filtered_words)
+    #features['avgWordLength'] = charLength / len(filtered_words)
+    features["numNouns"] = tag_counts["N"]
+    features["numVerbs"] = tag_counts["V"]
+    features["numAdj"] = tag_counts["ADJ"]
+    features["numAdv"] = tag_counts["ADV"]
+    features["numNum"] = tag_counts["NUM"]
+
  #   print(list(features.values()))
     return features
 def get_scikit_kmeans_centroids(num_clusters, vectors, tolerance):
@@ -296,7 +315,7 @@ def my_kmeans(Data, k, e=0.001):
         if len(last_centroids) > 0:
             sum = 0
             for centroid, last_centroid in zip(centroids, last_centroids):
-                    sum += np.sum(centroid - last_centroid) ** 2
+                sum += np.sum(centroid - last_centroid) ** 2
             if(sum <= e):
                 return clusters  # Optimal clustering achieved.
 
@@ -306,5 +325,7 @@ def my_kmeans(Data, k, e=0.001):
 
 
 if __name__ == '__main__':
+    start_time = time.time()
     main()
+    print("--- %s seconds ---" % (time.time() - start_time))
     
