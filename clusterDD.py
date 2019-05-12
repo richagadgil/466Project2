@@ -117,11 +117,9 @@ def main():
         print("K:", i)
         clusters = my_kmeans(test_records, i, 0.01)
         contingency_table(c_names, clusters)
-        #print("Sklearn kmeans labels:")
-        #get_scikit_kmeans_centroids(i,np.array(vectors),0.01)
 
         # USED TO TEST AGAINST SCIKIT LEARN RESULTS 
-        # print(len([i for i, j in zip(my_labels, scikit_labels) if i == j]))
+        #print(len([i for i, j in zip(my_labels, scikit_labels) if i == j]))
 
 
 
@@ -222,10 +220,10 @@ def get_features(text):
         synset = wn.synsets(word, wordnet_tag)
 
 
-        if word not in features:
-            features[word] = 1
-        else:
-            features[word] += 1
+        #if word not in features:
+        #    features[word] = 1
+        #else:
+        #    features[word] += 1
 
         charLength += len(word)
 
@@ -317,23 +315,22 @@ def my_kmeans(Data, k, e=0.001):
                 centroids[i] = np.mean([record.vector for record in clusters[i]] , axis = 0)
             else:
                 max_len = 0
-                max_cluster = None
                 index = -1
                 for j in range(k):
-                    if len(cluster[j]) > max_len:
-                        max_len = len(cluster[j])
-                        max_cluster = cluster[j]
+                    if len(clusters[j]) > max_len:
+                        max_len = len(clusters[j])
                         index = j
                 max_dist = 0
                 max_point = None
-                for point in max_cluster:
-                    dist = np.linalg.norm(point.vector - centroids[j])                                
+                for point in clusters[index]:
+                    dist = np.linalg.norm(point.vector - centroids[index]) ** 2                                
                     if dist > max_dist:
                         max_point = point
                         max_dist = dist
-                max_cluster.remove(max_point)
-                centroid[i] = max_point.vector
-                centroid[j] = np.mean([record.vector for record in max_cluster], axis=0)
+                clusters[index].remove(max_point)
+                clusters[i].append(max_point)
+                centroids[i] = max_point.vector
+                centroids[index] = np.mean([record.vector for record in clusters[index]], axis=0)
                         
         # Check if within error TESTING
         if len(last_centroids) > 0:
