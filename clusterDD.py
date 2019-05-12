@@ -78,11 +78,18 @@ def main():
             #if(num_records == 3000):
             #    break  
     #print(data['data'])
+    
+    
+    test_records = set()
 
-    test_records = []
-    for i in range(400):
+    for i in range(3000):
         record = random.choice(records)
-        test_records.append(record)
+        while record in test_records:
+            record = random.choice(records)
+        test_records.add(record)
+    
+    test_records = list(test_records)
+    for record in test_records:
         feature = get_features(record.text)
         for name in feature:
             if name not in overall_features:
@@ -92,7 +99,7 @@ def main():
         else:
             c_names[record.c_name] +=1
         features.append(feature)
-              
+        
     for i in range(len(features)):
         vector = dict.fromkeys(overall_features, 0)
         for key in features[i]:
@@ -158,8 +165,8 @@ def contingency_table(labels, clusters):
 def pre_process(text):
     lemmatizer = nltk.stem.WordNetLemmatizer()
     porter_stemmer = nltk.stem.porter.PorterStemmer() 
-    target_tags = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS", "PRP", "PRP$","RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ", "CD"]
-   
+    #target_tags = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS", "PRP", "PRP$","RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ", "CD"]
+    target_tags = ["JJ", "JJK", "JJS", "NN", "NNP","NNPS", "NNS"] 
 
     text = re.sub('[^a-zA-Z0-9]', ' ', text)
     text = text.lower()
@@ -168,7 +175,7 @@ def pre_process(text):
     tags = nltk.pos_tag(words)
     filtered_words = [word for word in filtered_words if len(word) > 3]
     filtered_words = [tag[0] for tag in tags if tag[1] in target_tags]
-    filtered_words = [lemmatizer.lemmatize(filtered_word[0]) for filtered_word in filtered_words]
+    filtered_words = [lemmatizer.lemmatize(filtered_word) for filtered_word in filtered_words]
     return filtered_words
 
 def get_features(text):
@@ -206,24 +213,22 @@ def get_features(text):
         if len(synsets) == 0:
             continue
         
-        if word not in features:
-            features[word] = 1
-        else:
-            features[word] += 1
-       #charLength += len(word)
-       # if tag.startswith('N') or tag.startswith('P'):
-       #     tag_counts["N"] += 1
-       # elif tag.startswith('J'):
-       #     tag_counts["ADJ"] += 1
-       # elif tag.startswith('V'):
+        #if word not in features:
+        #    features[word] = 1
+        charLength += len(word)
+      #  if tag.startswith('N') or tag.startswith('P'):
+      #      tag_counts["N"] += 1
+      #  elif tag.startswith('J'):
+      #      tag_counts["ADJ"] += 1
+      #  elif tag.startswith('V'):
        #     tag_counts["V"] += 1
        # elif tag.startswith('R'):
        #     tag_counts["ADV"] += 1
        # else:
        #     tag_counts["NUM"] += 1
     
-    #features["sentenceLength"] = len(filtered_words)  
-    #features['avgWordLength'] = charLength / len(filtered_words)  
+    features["sentenceLength"] = len(filtered_words)  
+    features['avgWordLength'] = charLength / len(filtered_words)  
     #features["numNouns"] = tag_counts["N"] 
     #features["numVerbs"] = tag_counts["V"] 
     #features["numAdj"] = tag_counts["ADJ"] 
@@ -241,7 +246,6 @@ def get_scikit_kmeans_centroids(num_clusters, vectors, tolerance):
             tol=tolerance
     ).fit(vectors).labels_)) #we overwrite the foggy method
 
-    
 def _closest_cluster_index(feature_x_j, centroids):
     closest_dist = np.inf
     closest_cluster_index = 0
@@ -290,8 +294,28 @@ def my_kmeans(Data, k, e=0.001):
 
         # Centroid update step
         for i in range(k):
-            centroids[i] = np.mean([record.vector for record in clusters[i]] , axis = 0)
-            
+            if len(clusters[i]) != 0:
+                centroids[i] = np.mean([record.vector for record in clusters[i]] , axis = 0)
+            else:
+                max_len = 0
+                max_cluster = None
+                index = -1
+                for j in range(k):
+                    if len(cluster[j]) > max_len:
+                        max_len = len(cluster[j])
+                        max_cluster = cluster[j]
+                        index = j
+                max_dist = 0
+                max_point = None
+                for point in max_cluster:
+                    dist = np.linalg.norm(point.vector - centroids[j])                                
+                    if dist > max_dist:
+                        max_point = point
+                        max_dist = dist
+                max_cluster.remove(max_point)
+                centroid[i] = max_point.vector
+                centroid[j] = np.mean([record.vector for record in max_cluster], axis=0)
+                        
         # Check if within error TESTING
         if len(last_centroids) > 0:
             sum = 0
