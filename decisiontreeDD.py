@@ -26,9 +26,8 @@ def check_purity(data, purity_thresh):
     val_counts = sorted(val_counts)
     highest = val_counts[len(val_counts) - 1]
     purity = highest / float(np.size(data,0))
-    print("Purity: {} , Purity Thresh: {}".format(purity,purity_thresh))
+   # print("Purity: {} , Purity Thresh: {}".format(purity,purity_thresh))
     if (purity >= purity_thresh):
-        print("Returned")
         return True
     else:
         return False
@@ -195,7 +194,7 @@ def populateRecords(filename):
                     overall_features[name] = 0
             features.append(feature)
             records.append(r)
-            if(counter == 3000):
+            if (counter == 3000):
                 break
             counter += 1
     for i in range(len(records)):
@@ -205,11 +204,11 @@ def populateRecords(filename):
         vector = np.array(list(vector.values()))
         records[i].add_vector(vector)
     temp_records = records
-    for i in range(900):
+    for i in range(2000):
         random_record = random.choice(temp_records)
         temp_records.remove(random_record)
         test_records.append(random_record)
-    return test_records
+    return records
 
 def create_df(records):
     vector_list = []
@@ -221,6 +220,32 @@ def create_df(records):
     df = pd.DataFrame(vector_list, columns=range(1,vector_length+1))
     df["c_name"] = c_name_list 
     return df
+
+def printPerCommittee(test_data, labels):
+    for name in labels:
+        filtered = test_data[test_data["classification"] == name]
+        true_positive = sum(filtered["classification_correct"])
+        false_positive = filtered.shape[0] - true_positive
+        actuals = test_data[test_data["c_name"] == name]
+        actuals = actuals[actuals["classification_correct"] == 0]
+        false_negative = actuals.shape[0]
+        if(true_positive + false_positive == 0):
+            precision = 0
+        else:
+            precision = true_positive / float(true_positive + false_positive)
+        if(true_positive + false_negative == 0):
+            recall = 0
+        else:
+            recall = true_positive / float(true_positive + false_negative)
+        if(precision + recall) == 0:
+            f1 = 0
+        else:
+            f1 = (precision * recall) / float(precision + recall) 
+            f1 = 2 * f1
+        print("\nScores for {} committee:".format(name))
+        print("Precision: {}".format(precision))
+        print("Recall: {}".format(recall))
+        print("F1 Score: {}".format(f1))       
 
 def main():
     args = sys.argv[1:]
@@ -242,7 +267,7 @@ def main():
         train_num = train_data.shape[0]
         test_num = test_data.shape[0]
         tree = decision_tree(train_data, 0.8, 10)
-        print(tree)
+       # print(tree)
         accuracy = calculate_accuracy(test_data, tree)
         committee_names = set(list(dataframe["c_name"]))
         print("Number of labels: {}".format(num_labels))
@@ -252,6 +277,8 @@ def main():
         print("Labels: ", end='')
         print(committee_names)
         print("Overall Accuracy: {}".format(accuracy)) 
+        printPerCommittee(test_data, committee_names)
+    
         #Create dataframe with columns of each vector value and the label(c_name)
         #Split it into training and testing sets, pass in training set to decision tree algorithm        
 if __name__ == '__main__':
