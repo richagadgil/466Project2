@@ -28,17 +28,11 @@ def pre_processor(df):
     porter_stemmer = nltk.stem.porter.PorterStemmer() 
     target_tags = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS", "PRP", "PRP$","RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ", "CD"]
    
-
     df['text'] = df['text'].str.lower().replace("[^A-Za-z\s]", "")
     
     #df['text'] = df['text'].apply(lambda x: [item for item in x if item not in stopwords.words('english')])
-
     #df['text'] = df['text'].apply(lambda x: [item for item in x if len(item) > 3])
-
     #df['text'] = df['text'].apply(lambda x: [item for item in x if nltk.pos_tag(item)[1] in target_tags])
-
-
-
     #tags = nltk.pos_tag(words)
     #filtered_words = [word for word in filtered_words if len(word) > 3]
     #filtered_words = [tag[0] for tag in tags if tag[1] in target_tags]
