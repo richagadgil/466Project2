@@ -168,8 +168,8 @@ def contingency_table(labels, clusters):
 def pre_process(text):
     lemmatizer = nltk.stem.WordNetLemmatizer()
     porter_stemmer = nltk.stem.porter.PorterStemmer() 
-    #target_tags = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS", "PRP", "PRP$","RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ", "CD"]
-    target_tags = ["JJ", "JJK", "JJS", "NN", "NNP","NNPS", "NNS"] 
+    target_tags = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS", "PRP", "PRP$","RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ", "CD"]
+    #target_tags = ["JJ", "JJK", "JJS", "NN", "NNP","NNPS", "NNS"] 
 
     text = re.sub('[^a-zA-Z0-9]', ' ', text)
     text = text.lower()
@@ -177,8 +177,8 @@ def pre_process(text):
    
     filtered_words = [word for word in words if word not in stopwords.words('english')]
     tags = nltk.pos_tag(words)
-    filtered_words = [word for word in filtered_words if len(word) > 3]
-    filtered_words = [tag[0] for tag in tags if tag[1] in target_tags]
+
+    #filtered_words = [tag[0] for tag in tags if tag[1] in target_tags]
     filtered_words = [lemmatizer.lemmatize(filtered_word) for filtered_word in filtered_words]
      
     return filtered_words
@@ -221,10 +221,10 @@ def get_features(text):
         synset = wn.synsets(word, wordnet_tag)
 
 
-        #if word not in features:
-        #    features[word] = 1
-        #else:
-        #    features[word] += 1
+    #    if word not in features:
+    #        features[word] = 1
+    #    else:
+    #        features[word] += 1
 
         charLength += len(word)
 
@@ -245,8 +245,8 @@ def get_features(text):
     tag_counts["ADV"] = tag_counts["ADV"]
     tag_counts["NUM"] = tag_counts["NUM"]
 
-    #features["sentenceLength"] = len(filtered_words)
-    #features['avgWordLength'] = charLength / len(filtered_words)
+    features["sentenceLength"] = len(filtered_words)
+    features['avgWordLength'] = charLength / len(filtered_words)
     features["numNouns"] = tag_counts["N"]
     features["numVerbs"] = tag_counts["V"]
     features["numAdj"] = tag_counts["ADJ"]
@@ -315,23 +315,24 @@ def my_kmeans(Data, k, e=0.001):
             if len(clusters[i]) != 0:
                 centroids[i] = np.mean([record.vector for record in clusters[i]] , axis = 0)
             else:
-                max_len = 0
-                index = -1
-                for j in range(k):
-                    if len(clusters[j]) > max_len:
-                        max_len = len(clusters[j])
-                        index = j
-                max_dist = 0
-                p_index = -1
-                for k in range(max_len):
-                    dist = np.linalg.norm(clusters[index][k].vector - centroids[index]) ** 2                                
-                    if dist > max_dist:
-                        p_index = k
-                        max_dist = dist
-                clusters[i].append(clusters[index][p_index])
-                centroids[i] = clusters[index][p_index].vector
-                clusters[index].pop(p_index)
-                centroids[index] = np.mean([record.vector for record in clusters[index]], axis=0)
+                pass
+                #max_len = 0
+                #index = -1
+                #for j in range(k):
+                #    if len(clusters[j]) > max_len:
+                #        max_len = len(clusters[j])
+                #        index = j
+                #max_dist = 0
+                #p_index = -1
+                #for k in range(max_len):
+                #    dist = np.linalg.norm(clusters[index][k].vector - centroids[index]) ** 2                                
+                #    if dist > max_dist:
+                #        p_index = k
+                #        max_dist = dist
+                #clusters[i].append(clusters[index][p_index])
+                #centroids[i] = clusters[index][p_index].vector
+                #clusters[index].pop(p_index)
+                #centroids[index] = np.mean([record.vector for record in clusters[index]], axis=0)
                         
         # Check if within error TESTING
         if len(last_centroids) > 0:
