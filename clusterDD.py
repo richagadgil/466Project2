@@ -85,7 +85,7 @@ def main():
     
     test_records = set()
 
-    for i in range(4000):
+    for i in range(1000):
         record = random.choice(records)
         while record in test_records:
             record = random.choice(records)
@@ -322,15 +322,15 @@ def my_kmeans(Data, k, e=0.001):
                         max_len = len(clusters[j])
                         index = j
                 max_dist = 0
-                max_point = None
-                for point in clusters[index]:
-                    dist = np.linalg.norm(point.vector - centroids[index]) ** 2                                
+                p_index = -1
+                for k in range(max_len):
+                    dist = np.linalg.norm(clusters[index][k].vector - centroids[index]) ** 2                                
                     if dist > max_dist:
-                        max_point = point
+                        p_index = k
                         max_dist = dist
-                clusters[index].remove(max_point)
-                clusters[i].append(max_point)
-                centroids[i] = max_point.vector
+                clusters[i].append(clusters[index][p_index])
+                centroids[i] = clusters[index][p_index].vector
+                clusters[index].pop(p_index)
                 centroids[index] = np.mean([record.vector for record in clusters[index]], axis=0)
                         
         # Check if within error TESTING
