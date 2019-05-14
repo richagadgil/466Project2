@@ -1,29 +1,13 @@
 import pandas as pd
 import numpy as np
-from sklearn.feature_extraction import DictVectorizer
-from sklearn.feature_extraction.text import CountVectorizer
-from collections import Counter
-import pandas as pd
-import numpy as np
-from nltk.tokenize import word_tokenize
-from nltk import pos_tag
 from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
-from sklearn.preprocessing import LabelEncoder
-from collections import defaultdict
-from nltk.corpus import wordnet as wn
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn import model_selection, naive_bayes, svm
-from sklearn.metrics import accuracy_score
 import time
-from sklearn.linear_model import LogisticRegression
-from nltk.corpus import stopwords 
-from nltk.corpus import wordnet as wn
 import nltk
 import re
 import sys
-from sklearn.metrics import precision_score, recall_score, f1_score
-from sklearn.linear_model import SGDClassifier
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn import model_selection, svm
 
 def vectorize(n=0):
     complete_df = pd.DataFrame()
