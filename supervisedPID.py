@@ -21,43 +21,27 @@ from nltk.corpus import stopwords
 from nltk.corpus import wordnet as wn
 import nltk
 import re
-
-
-def pre_processor(df):
-    lemmatizer = nltk.stem.WordNetLemmatizer()
-    porter_stemmer = nltk.stem.porter.PorterStemmer() 
-    target_tags = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS", "PRP", "PRP$","RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ", "CD"]
-   
-    df['text'] = df['text'].str.lower().replace("[^A-Za-z\s]", "")
-    
-    #df['text'] = df['text'].apply(lambda x: [item for item in x if item not in stopwords.words('english')])
-    #df['text'] = df['text'].apply(lambda x: [item for item in x if len(item) > 3])
-    #df['text'] = df['text'].apply(lambda x: [item for item in x if nltk.pos_tag(item)[1] in target_tags])
-    #tags = nltk.pos_tag(words)
-    #filtered_words = [word for word in filtered_words if len(word) > 3]
-    #filtered_words = [tag[0] for tag in tags if tag[1] in target_tags]
-
-    #filtered_words = [lemmatizer.lemmatize(filtered_word) for filtered_word in filtered_words]
-
-    return df
+import sys
+from sklearn.metrics import precision_score, recall_score
 
 
 def vectorize(n=0):
     complete_df = pd.DataFrame()
     df = pd.read_csv("DigitalDemocracy/committee_utterances.tsv", sep="\t")
 
+   
     #get N most frequent speakers
     if(n > 0):
         items_counts = df['pid'].value_counts()[0:n]
         df = df[df['pid'].isin(items_counts.keys())]
 
+    df['text'] = df['text'].str.lower().replace("[^A-Za-z\s]", "")
 
-    df = pre_processor(df)
 
     Train_X, Test_X, Train_Y, Test_Y = model_selection.train_test_split(df['text'],df['pid'],test_size=0.2)
 
     stop_words = set(stopwords.words('english'))
-    Tfidf_vect = TfidfVectorizer(max_features=500, stop_words=stop_words)
+    Tfidf_vect = TfidfVectorizer(stop_words=stop_words)
     Tfidf_vect.fit(df['text'])
     Train_X_Tfidf = Tfidf_vect.transform(Train_X)
     Test_X_Tfidf = Tfidf_vect.transform(Test_X)
@@ -76,7 +60,8 @@ def vectorize(n=0):
     SVM.fit(Train_X_Tfidf,Train_Y)
     predictions_SVM = SVM.predict(Test_X_Tfidf)
     print("SVM Accuracy Score -> ",accuracy_score(predictions_SVM, Test_Y)*100, "%")
-
+    print("Average SVM Precision Score -> ", np.mean(precision_score(predictions_SVM, Test_Y, average=None)) *100, "%")
+    print("Average SVM Recall Score -> ", np.mean(recall_score(predictions_SVM, Test_Y,average=None)) *100, "%")
     # Classifier - Logistic Regression - LR
     clf = LogisticRegression(random_state=0, solver='lbfgs', multi_class='multinomial')
     clf.fit(Train_X_Tfidf, Train_Y)
@@ -85,8 +70,13 @@ def vectorize(n=0):
 
 
 def main():
-    vectorize(50)
+    if(len(sys.argv) > 1):
+        n = sys.argv[1]
+        vectorize(int(n))
+    else:
+        vectorize(0)
 
+    return
 
 if __name__ == '__main__':
     start_time = time.time()
