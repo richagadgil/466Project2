@@ -174,7 +174,6 @@ def classify_test(test_row,tree):
         return classify_test(test_row, remaining_tree)
 
 def calculate_accuracy(test_df, tree):
-    print(tree)
     test_df["classification"] = test_df.apply(classify_test, axis=1, args=(tree,))    
     test_df["classification_correct"] = (test_df.classification == test_df.c_name)
     accuracy = test_df.classification_correct.mean()    
@@ -202,7 +201,7 @@ def populateRecords(filename):
                     overall_features[name] = 0
             features.append(feature)
             records.append(r)
-            if (counter == 1000):
+            if (counter == 5000):
                 break
             counter += 1
     for i in range(len(records)):
@@ -211,12 +210,7 @@ def populateRecords(filename):
             vector[key] = features[i][key]
         vector = np.array(list(vector.values()))
         records[i].add_vector(vector)
-    temp_records = records
-    for i in range(300):
-        random_record = random.choice(temp_records)
-        temp_records.remove(random_record)
-        test_records.append(random_record)
-    return test_records
+    return records
 
 def create_df(records):
     vector_list = []
