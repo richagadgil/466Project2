@@ -117,6 +117,7 @@ def contingency_table(labels, clusters):
     rows = {}
     sum_f1 = 0
 
+    confusion_matrix = []
 
     for clusterNo in range(0, len(clusters)):
         if len(clusters[clusterNo]) == 0:
@@ -136,19 +137,25 @@ def contingency_table(labels, clusters):
         purity_max_sum += max(row) #Add maximum label value present in cluster
         f1 = (2 * precision * recall) / (precision + recall)
 
-        print(clusterNo , " ", row)
-        print("Precision of Cluster", clusterNo, "=", precision) 
-        print("Recall of Cluster", clusterNo, "=", recall) 
-        print("F1 Score of Cluster", clusterNo, "=", f1, "\n\n\n") 
+        confusion_matrix.append(row)
+        #print(clusterNo , " ", row)
+        #print("Precision of Cluster", clusterNo, "=", precision) 
+        #print("Recall of Cluster", clusterNo, "=", recall) 
+        #print("F1 Score of Cluster", clusterNo, "=", f1, "\n\n\n") 
         sum_f1 += f1
     
-
+    printArray(confusion_matrix)
     average_f1 = sum_f1/len(clusters)
 
     
     print("Average F1", average_f1) #F1 Avg Calculation
     print("Purity", purity_max_sum/purity_total_rows) #Purity Calculation
 
+def printArray(arr):
+    for row in arr:
+        for item in row:
+            print("{0:3.0f}".format(item), end = " ")
+        print("")
     
 def pre_process(text):
     lemmatizer = nltk.stem.WordNetLemmatizer()
