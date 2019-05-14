@@ -38,7 +38,6 @@ def main():
 
     np.seterr(all='print')
     
-    nltk.download('omw') 
     args = sys.argv[1:]
     if not args or len(args) != 1:
         print("usage: main filename")
