@@ -136,10 +136,10 @@ def contingency_table(labels, clusters):
         purity_max_sum += max(row) #Add maximum label value present in cluster
         f1 = (2 * precision * recall) / (precision + recall)
 
-       # print(clusterNo , " ", row)
-       # print("Precision of Cluster", clusterNo, "=", precision) 
-       # print("Recall of Cluster", clusterNo, "=", recall) 
-       # print("F1 Score of Cluster", clusterNo, "=", f1, "\n\n\n") 
+        print(clusterNo , " ", row)
+        print("Precision of Cluster", clusterNo, "=", precision) 
+        print("Recall of Cluster", clusterNo, "=", recall) 
+        print("F1 Score of Cluster", clusterNo, "=", f1, "\n\n\n") 
         sum_f1 += f1
     
 
