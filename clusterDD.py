@@ -85,7 +85,7 @@ def main():
     
     test_records = set()
 
-    for i in range(1000):
+    for i in range(4000):
         record = random.choice(records)
         while record in test_records:
             record = random.choice(records)
@@ -174,14 +174,14 @@ def pre_process(text):
     text = re.sub('[^a-zA-Z0-9]', ' ', text)
     text = text.lower()
     words = nltk.word_tokenize(text)
-   
+    filtered_words = words
     filtered_words = [word for word in words if word not in stopwords.words('english')]
     tags = nltk.pos_tag(words)
 
     #filtered_words = [tag[0] for tag in tags if tag[1] in target_tags]
     filtered_words = [lemmatizer.lemmatize(filtered_word) for filtered_word in filtered_words]
-     
     return filtered_words
+    #return filtered_words
 
 def penn2morphy(penntag, returnNone=False):
     morphy_tag = {'NN':wn.NOUN, 'JJ':wn.ADJ,
@@ -245,13 +245,18 @@ def get_features(text):
     tag_counts["ADV"] = tag_counts["ADV"]
     tag_counts["NUM"] = tag_counts["NUM"]
 
-    features["sentenceLength"] = len(filtered_words)
+
+    stop = stopwords.words('english')
+    features["stopWords"] = len([x for x in text.split() if x in stop])
+
+    
+    #features["sentenceLength"] = len(filtered_words)
     features['avgWordLength'] = charLength / len(filtered_words)
     features["numNouns"] = tag_counts["N"]
     features["numVerbs"] = tag_counts["V"]
     features["numAdj"] = tag_counts["ADJ"]
-    features["numAdv"] = tag_counts["ADV"]
-    features["numNum"] = tag_counts["NUM"]
+    #features["numAdv"] = tag_counts["ADV"]
+    #features["numNum"] = tag_counts["NUM"]
 
  #   print(list(features.values()))
     return features
