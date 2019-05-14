@@ -17,16 +17,47 @@ from sklearn import model_selection, naive_bayes, svm
 from sklearn.metrics import accuracy_score
 import time
 from sklearn.linear_model import LogisticRegression
+from nltk.corpus import stopwords 
+from nltk.corpus import wordnet as wn
+import nltk
+import re
 
 
+def pre_processor(df):
+    lemmatizer = nltk.stem.WordNetLemmatizer()
+    porter_stemmer = nltk.stem.porter.PorterStemmer() 
+    target_tags = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS", "PRP", "PRP$","RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ", "CD"]
+   
+    df['text'] = df['text'].str.lower().replace("[^A-Za-z\s]", "")
+    
+    #df['text'] = df['text'].apply(lambda x: [item for item in x if item not in stopwords.words('english')])
+    #df['text'] = df['text'].apply(lambda x: [item for item in x if len(item) > 3])
+    #df['text'] = df['text'].apply(lambda x: [item for item in x if nltk.pos_tag(item)[1] in target_tags])
+    #tags = nltk.pos_tag(words)
+    #filtered_words = [word for word in filtered_words if len(word) > 3]
+    #filtered_words = [tag[0] for tag in tags if tag[1] in target_tags]
 
-def vectorize():
+    #filtered_words = [lemmatizer.lemmatize(filtered_word) for filtered_word in filtered_words]
+
+    return df
+
+
+def vectorize(n=0):
     complete_df = pd.DataFrame()
     df = pd.read_csv("DigitalDemocracy/committee_utterances.tsv", sep="\t")
-    
+
+    #get N most frequent speakers
+    if(n > 0):
+        items_counts = df['pid'].value_counts()[0:n]
+        df = df[df['pid'].isin(items_counts.keys())]
+
+
+    df = pre_processor(df)
+
     Train_X, Test_X, Train_Y, Test_Y = model_selection.train_test_split(df['text'],df['pid'],test_size=0.2)
 
-    Tfidf_vect = TfidfVectorizer(max_features=500)
+    stop_words = set(stopwords.words('english'))
+    Tfidf_vect = TfidfVectorizer(max_features=500, stop_words=stop_words)
     Tfidf_vect.fit(df['text'])
     Train_X_Tfidf = Tfidf_vect.transform(Train_X)
     Test_X_Tfidf = Tfidf_vect.transform(Test_X)
@@ -38,6 +69,7 @@ def vectorize():
     predictions_NB = Naive.predict(Test_X_Tfidf)
     # Use accuracy_score function to get the accuracy
     print("Naive Bayes Accuracy Score -> ",accuracy_score(predictions_NB, Test_Y)*100, "%")
+
 
     # Classifier - Algorithm - SVM
     SVM = svm.SVC(C=1.0, kernel='linear', degree=3, gamma='auto')
@@ -53,7 +85,7 @@ def vectorize():
 
 
 def main():
-    vectorize()
+    vectorize(50)
 
 
 if __name__ == '__main__':
