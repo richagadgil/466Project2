@@ -85,7 +85,7 @@ def main():
     
     test_records = set()
 
-    for i in range(4000):
+    for i in range(8000):
         record = random.choice(records)
         while record in test_records:
             record = random.choice(records)
@@ -175,7 +175,7 @@ def pre_process(text):
     text = text.lower()
     words = nltk.word_tokenize(text)
     filtered_words = words
-    filtered_words = [word for word in words if word not in stopwords.words('english')]
+    #filtered_words = [word for word in words if word not in stopwords.words('english')]
     tags = nltk.pos_tag(words)
 
     #filtered_words = [tag[0] for tag in tags if tag[1] in target_tags]
@@ -247,16 +247,16 @@ def get_features(text):
 
 
     stop = stopwords.words('english')
-    features["stopWords"] = len([x for x in text.split() if x in stop])
+    features["stopWords"] = len([x for x in filtered_words if x in stop]) / len(filtered_words)
 
     
     #features["sentenceLength"] = len(filtered_words)
-    features['avgWordLength'] = charLength / len(filtered_words)
-    features["numNouns"] = tag_counts["N"]
-    features["numVerbs"] = tag_counts["V"]
-    features["numAdj"] = tag_counts["ADJ"]
-    #features["numAdv"] = tag_counts["ADV"]
-    #features["numNum"] = tag_counts["NUM"]
+    #features['avgWordLength'] = charLength / len(filtered_words)
+    features["numNouns"] = tag_counts["N"] / len(filtered_words)
+    features["numVerbs"] = tag_counts["V"] / len(filtered_words)
+    features["numAdj"] = tag_counts["ADJ"] / len(filtered_words)
+    features["numAdv"] = tag_counts["ADV"] / len(filtered_words)
+    features["numNum"] = tag_counts["NUM"] / len(filtered_words)
 
  #   print(list(features.values()))
     return features
