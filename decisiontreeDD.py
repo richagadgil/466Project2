@@ -227,6 +227,9 @@ def create_df(records):
     return df
 
 def printPerCommittee(test_data, labels):
+    avgPrecision = 0
+    avgRecall = 0
+    avgF1 = 0
     for name in labels:
         filtered = test_data[test_data["classification"] == name]
         true_positive = sum(filtered["classification_correct"])
@@ -238,19 +241,26 @@ def printPerCommittee(test_data, labels):
             precision = 0
         else:
             precision = true_positive / float(true_positive + false_positive)
+            avgPrecision += precision
         if(true_positive + false_negative == 0):
             recall = 0
         else:
             recall = true_positive / float(true_positive + false_negative)
+            avgRecall += recall
         if(precision + recall) == 0:
             f1 = 0
         else:
             f1 = (precision * recall) / float(precision + recall) 
             f1 = 2 * f1
+            avgF1 += f1
         print("\nScores for {} committee:".format(name))
         print("Precision: {}".format(precision))
         print("Recall: {}".format(recall))
         print("F1 Score: {}".format(f1))       
+
+    print("\nAverage precision: {}".format(avgPrecision/float(len(labels))))
+    print("Average recall: {}".format(avgRecall/float(len(labels))))
+    print("Average F1 score: {}".format(avgF1/float(len(labels))))
 
 def get_hearings_dict(records):
     hearings_dict = {}

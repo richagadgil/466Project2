@@ -25,6 +25,7 @@ def vectorize(n=0):
     Train_X, Test_X, Train_Y, Test_Y = model_selection.train_test_split(df['text'],df['pid'],test_size=0.2)
 
     stop_words = set(stopwords.words('english'))
+    
     tfidf = TfidfVectorizer(stop_words=stop_words)
     tfidf.fit(df['text'])
     Train_X = tfidf.transform(Train_X)

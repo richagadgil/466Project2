@@ -66,16 +66,8 @@ def main():
             if words[3] not in all_c_names:
                 all_c_names[words[3]] = 1
     
-    test_records = set()
 
-    for i in range(8000):
-        record = random.choice(records)
-        while record in test_records:
-            record = random.choice(records)
-        test_records.add(record)
-    
-    test_records = list(test_records)
-    for record in test_records:
+    for record in records:
         feature = get_features(record.text)
         for name in feature:
             if name not in overall_features:
@@ -98,7 +90,7 @@ def main():
     print("My Kmeans labels:")
     for i in range(len(c_names) - 1, len(c_names)):
         print("K:", i+2)
-        clusters = my_kmeans(test_records, i, 0.01)
+        clusters = my_kmeans(records, i, 0.01)
         contingency_table(c_names, clusters)
         
         #print("SciKitLearn Labels:")
